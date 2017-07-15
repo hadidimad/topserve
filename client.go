@@ -1,22 +1,13 @@
-package main
+package topserve
 
 import (
-	//"bufio"
+	"encoding/json"
 	"fmt"
 	"net"
 	"time"
-
-	//"os"
-	"encoding/json"
-	"reflect"
 )
 
 type handler func(v interface{}, unixTime int64)
-
-type Message struct {
-	Mode string
-	Data interface{}
-}
 
 type Client struct {
 	c               net.Conn
@@ -95,27 +86,6 @@ func (cl *Client) DeRegisterSubscriber(name string) error {
 	}
 	delete(cl.YourSubscribers, name)
 	delete(cl.topic, name)
-	return nil
-}
-
-func (cl *Client) UnSubscribe(name string, h handler) error {
-	if cl.topic[name] == nil {
-		return fmt.Errorf("this publisher not found")
-	}
-	handlers := cl.topic[name]
-	address := reflect.ValueOf(h).Pointer()
-	index := -1
-	for i := range handlers {
-		if reflect.ValueOf(handlers[i]).Pointer() == address {
-			index = i
-			break
-		}
-	}
-	if index == -1 {
-		return fmt.Errorf("handler not found")
-	}
-	handlers = append(handlers[:index], handlers[index+1:]...)
-	cl.topic[name] = handlers
 	return nil
 }
 
@@ -230,62 +200,4 @@ func (cl *Client) HandleIncomings() {
 			}
 		}
 	}
-}
-
-func main() {
-	var client Client
-	client, err := client.New(":7777")
-	if err != nil {
-		fmt.Println(err)
-	}
-	go client.HandleIncomings()
-	for {
-		var input string
-		fmt.Scan(&input)
-		if input == "rp" {
-			err := client.RegisterPublisher("test:test")
-			if err != nil {
-				fmt.Println(err)
-			}
-		}
-		if input == "dp" {
-			err := client.DeRegisterPublisher("test:test")
-			if err != nil {
-				fmt.Println(err)
-			}
-		}
-		if input == "p" {
-			client.PublishServer("test:test", 23)
-		}
-		if input == "sub" {
-			err := client.Subscribe("test:test", func(v interface{}, unixTime int64) {
-				fmt.Println("test:test happens in ", unixTime, "and the value is ", v)
-			})
-			if err != nil {
-				fmt.Println(err)
-			}
-		}
-		if input == "rsub" {
-			err := client.RegisterSubscriber("test:test")
-			if err != nil {
-				fmt.Println(err)
-			}
-		}
-		if input == "drsub" {
-			err := client.DeRegisterSubscriber("test:test")
-			if err != nil {
-				fmt.Println(err)
-			}
-		}
-		if input == "usub" {
-			err := client.UnSubscribe("test:test", func(v interface{}, unixTime int64) {
-				fmt.Println("test:test happens in ", unixTime, "and the value is ", v)
-			})
-			if err != nil {
-				fmt.Println(err)
-			}
-		}
-		fmt.Println("task Done")
-	}
-
 }

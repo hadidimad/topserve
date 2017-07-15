@@ -1,11 +1,9 @@
-package main
+package topserve
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
-	"os"
-	//"strings"
-	"encoding/json"
 )
 
 type Publisher struct {
@@ -250,39 +248,6 @@ func (s *Server) HandleConnection(c net.Conn) {
 					fmt.Println(err)
 				}
 			}
-		}
-	}
-}
-
-func main() {
-	/*ln, err := net.Listen("tcp", ":7777")
-	if err != nil {
-		fmt.Println("err listen to port")
-		os.Exit(-1)
-	}
-	for {
-		c, err := ln.Accept()
-		if err != nil {
-			fmt.Println("error making connection")
-		}
-		c.Close()
-		//go handleIncoming(c, &topic)
-		/*for i := range topic.Publishers {
-			fmt.Println(i.name, i.Conn)
-		}
-	}*/
-	var server Server
-	server, err := server.New(":7777")
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
-	for {
-		c, err := server.AcceptConnection()
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			go server.HandleConnection(c)
 		}
 	}
 }
