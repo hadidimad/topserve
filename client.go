@@ -193,7 +193,6 @@ func (cl *Client) HandleIncomings() {
 						if i == message.Data.(string) {
 							delete(cl.YourSubscribers, message.Data.(string))
 							delete(cl.topic, message.Data.(string))
-							fmt.Println("publisher "+message.Data.(string), " deleted")
 						}
 					}
 				}

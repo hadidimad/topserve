@@ -184,7 +184,6 @@ func (s *Server) HandleConnection(c net.Conn) {
 					response.Data = err.Error()
 				} else {
 					response.Data = " "
-					fmt.Println("registered Publisher", message.Data.(string))
 
 				}
 				b, _ := json.Marshal(response)
@@ -199,7 +198,6 @@ func (s *Server) HandleConnection(c net.Conn) {
 					response.Data = err.Error()
 				} else {
 					response.Data = " "
-					fmt.Println("registered subscriber", message.Data.(string))
 				}
 				b, _ := json.Marshal(response)
 				_, err = c.Write(b)
