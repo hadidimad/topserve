@@ -69,7 +69,7 @@ func (cl *Client) RegisterSubscriber(name string) error {
 	return nil
 }
 
-func (cl *Client) DeregisterSubscriber(name string) error {
+func (cl *Client) DeRegisterSubscriber(name string) error {
 	var finded bool
 	for i := range cl.YourSubscribers {
 		if i == name {
@@ -93,7 +93,7 @@ func (cl *Client) DeregisterSubscriber(name string) error {
 	if " " != Serr {
 		return fmt.Errorf(Serr)
 	}
-	delete(cl.YourPublishers, name)
+	delete(cl.YourSubscribers, name)
 	delete(cl.topic, name)
 	return nil
 }
@@ -177,6 +177,25 @@ func (cl *Client) RegisterPublisher(name string) error {
 	return nil
 }
 
+func (cl *Client) DeRegisterPublisher(name string) error {
+	msg := Message{
+		Mode: "delpublisher",
+		Data: name,
+	}
+	str, _ := json.Marshal(msg)
+	_, err := cl.c.Write([]byte(str))
+	if err != nil {
+		return err
+	}
+	Serr := <-cl.Err
+	if " " != Serr {
+		return fmt.Errorf(Serr)
+	}
+
+	cl.YourPublishers[name] = struct{}{}
+	return nil
+}
+
 func (cl *Client) HandleIncomings() {
 	for {
 		msg := make([]byte, 256)
@@ -197,6 +216,15 @@ func (cl *Client) HandleIncomings() {
 					err := cl.Publish(Data["name"].(string), Data["value"])
 					if err != nil {
 						fmt.Println(err)
+					}
+				}
+				if message.Mode == "delpublisher" {
+					for i := range cl.YourSubscribers {
+						if i == message.Data.(string) {
+							delete(cl.YourSubscribers, message.Data.(string))
+							delete(cl.topic, message.Data.(string))
+							fmt.Println("publisher "+message.Data.(string), " deleted")
+						}
 					}
 				}
 			}
@@ -220,6 +248,12 @@ func main() {
 				fmt.Println(err)
 			}
 		}
+		if input == "dp" {
+			err := client.DeRegisterPublisher("test:test")
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
 		if input == "p" {
 			client.PublishServer("test:test", 23)
 		}
@@ -238,7 +272,7 @@ func main() {
 			}
 		}
 		if input == "drsub" {
-			err := client.DeregisterSubscriber("test:test")
+			err := client.DeRegisterSubscriber("test:test")
 			if err != nil {
 				fmt.Println(err)
 			}

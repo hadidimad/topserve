@@ -40,6 +40,16 @@ func (p *Publisher) RegisterSubscriber(c net.Conn) error {
 	p.Subscribers[sub] = struct{}{}
 	return nil
 }
+func (p *Publisher) DeRegisterSubscriber(c net.Conn) error {
+	for j := range p.Subscribers {
+		if j.Conn == c {
+			delete(p.Subscribers, j)
+			return nil
+		}
+	}
+	return fmt.Errorf("subscriber not found")
+}
+
 func (p *Publisher) Publish(v interface{}) error {
 	for o := range p.Subscribers {
 		var message Message
@@ -101,6 +111,27 @@ func (s *Server) RegisterPublisher(name string, conn net.Conn) error {
 	return nil
 }
 
+func (s *Server) DeRegisterPublisher(name string, conn net.Conn) error {
+	for i := range s.Publishers {
+		if i.Name == name && i.Conn == conn {
+			for i := range i.Subscribers {
+				var msg Message
+				msg.Mode = "delpublisher"
+				msg.Data = name
+				str, _ := json.Marshal(msg)
+				_, err := i.Conn.Write(str)
+				if err != nil {
+					return err
+				}
+			}
+			delete(s.Publishers, i)
+			return nil
+		}
+	}
+
+	return fmt.Errorf("publisher not found")
+}
+
 func (s *Server) RegisterSubscriber(name string, c net.Conn) error {
 	for i := range s.Publishers {
 		if i.Name == name {
@@ -117,13 +148,11 @@ func (s *Server) RegisterSubscriber(name string, c net.Conn) error {
 func (s *Server) DeRegisterSubscriber(name string, c net.Conn) error {
 	for i := range s.Publishers {
 		if i.Name == name {
-			for j := range i.Subscribers {
-				if j.Conn == c {
-					delete(i.Subscribers, j)
-					return nil
-				}
+			err := i.DeRegisterSubscriber(c)
+			if err != nil {
+				return err
 			}
-			return fmt.Errorf("you are not subscriber for" + name)
+			return nil
 		}
 	}
 	return fmt.Errorf("publisher not found")
@@ -197,6 +226,19 @@ func (s *Server) HandleConnection(c net.Conn) {
 			}
 			if message.Mode == "delsubscriber" {
 				err := s.DeRegisterSubscriber(message.Data.(string), c)
+				if err != nil {
+					response.Data = err.Error()
+				} else {
+					response.Data = " "
+				}
+				b, _ := json.Marshal(response)
+				_, err = c.Write(b)
+				if err != nil {
+					fmt.Println(err)
+				}
+			}
+			if message.Mode == "delpublisher" {
+				err := s.DeRegisterPublisher(message.Data.(string), c)
 				if err != nil {
 					response.Data = err.Error()
 				} else {
