@@ -9,6 +9,7 @@ import (
 
 type handler func(v interface{}, unixTime int64)
 
+//Client struct
 type Client struct {
 	c               net.Conn
 	topic           map[string][]handler
@@ -17,6 +18,7 @@ type Client struct {
 	Err             chan string
 }
 
+//New will make new client and connect it to server in  address
 func (cl *Client) New(address string) (Client, error) {
 	c, err := net.Dial("tcp", address)
 	if err != nil {
@@ -31,6 +33,7 @@ func (cl *Client) New(address string) (Client, error) {
 	}, nil
 }
 
+//Subscribe will subscribe handle function to event
 func (cl *Client) Subscribe(name string, h handler) error {
 	for i := range cl.topic {
 		if i == name {
@@ -41,6 +44,7 @@ func (cl *Client) Subscribe(name string, h handler) error {
 	return fmt.Errorf("publisher not finded")
 }
 
+//RegisterSubscriber will register you as event subscriber in server to recive event
 func (cl *Client) RegisterSubscriber(name string) error {
 	msg := Message{
 		Mode: "subscriber",
@@ -60,6 +64,7 @@ func (cl *Client) RegisterSubscriber(name string) error {
 	return nil
 }
 
+//DeRegisterSubscriber will remove you from the event subscribers so you will not recive event
 func (cl *Client) DeRegisterSubscriber(name string) error {
 	var finded bool
 	for i := range cl.YourSubscribers {
@@ -89,18 +94,20 @@ func (cl *Client) DeRegisterSubscriber(name string) error {
 	return nil
 }
 
+//Publish should run when event happens this will run event handlers
 func (cl *Client) Publish(name string, v interface{}) error {
 	for i := range cl.topic {
 		if i == name {
 			handlers := cl.topic[name]
 			for _, i := range handlers {
-				go i(v, time.Now().Unix())
+				i(v, time.Now().Unix())
 			}
 		}
 	}
 	return nil
 }
 
+//PublishServer will notify server that this event happend
 func (cl *Client) PublishServer(name string, v interface{}) error {
 	for i := range cl.YourPublishers {
 		if i == name {
@@ -128,6 +135,7 @@ func (cl *Client) PublishServer(name string, v interface{}) error {
 	return fmt.Errorf("you have not registered this publisher")
 }
 
+//RegisterPublisher will Register you as publisher of event at server
 func (cl *Client) RegisterPublisher(name string) error {
 	msg := Message{
 		Mode: "publisher",
@@ -147,6 +155,7 @@ func (cl *Client) RegisterPublisher(name string) error {
 	return nil
 }
 
+//DeRegisterPublisher will remove you from server publisher for this event
 func (cl *Client) DeRegisterPublisher(name string) error {
 	msg := Message{
 		Mode: "delpublisher",
@@ -166,6 +175,7 @@ func (cl *Client) DeRegisterPublisher(name string) error {
 	return nil
 }
 
+//HandleIncomings will recive and process them this should be routine after making new client
 func (cl *Client) HandleIncomings() {
 	for {
 		msg := make([]byte, 256)

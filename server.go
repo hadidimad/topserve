@@ -6,26 +6,31 @@ import (
 	"net"
 )
 
+//Publisher publishers use for notify subscibers about event
 type Publisher struct {
 	Name        string
 	Conn        net.Conn
 	Subscribers map[*Subscriber]struct{}
 }
 
+//Subscriber will give the event
 type Subscriber struct {
 	Conn net.Conn
 }
 
+//Message use to commiunicate between server and client
 type Message struct {
 	Mode string
 	Data interface{}
 }
 
+//Server struct
 type Server struct {
 	Listener   net.Listener
 	Publishers map[*Publisher]struct{}
 }
 
+//RegisterSubscriber will add client to this pubilsher subscribers by giving client connection
 func (p *Publisher) RegisterSubscriber(c net.Conn) error {
 	for i := range p.Subscribers {
 		if c == i.Conn {
@@ -38,6 +43,8 @@ func (p *Publisher) RegisterSubscriber(c net.Conn) error {
 	p.Subscribers[sub] = struct{}{}
 	return nil
 }
+
+//DeRegisterSubscriber will remove c client from publisher subscribers
 func (p *Publisher) DeRegisterSubscriber(c net.Conn) error {
 	for j := range p.Subscribers {
 		if j.Conn == c {
@@ -48,6 +55,7 @@ func (p *Publisher) DeRegisterSubscriber(c net.Conn) error {
 	return fmt.Errorf("subscriber not found")
 }
 
+//Publish will notify subscriber that event happens
 func (p *Publisher) Publish(v interface{}) error {
 	for o := range p.Subscribers {
 		var message Message
@@ -69,6 +77,7 @@ func (p *Publisher) Publish(v interface{}) error {
 	return nil
 }
 
+//New will make new server
 func (s *Server) New(address string) (Server, error) {
 	ln, err := net.Listen("tcp", address)
 	if err != nil {
@@ -80,6 +89,7 @@ func (s *Server) New(address string) (Server, error) {
 	}, nil
 }
 
+//Publish will notify publisher that event happend
 func (s *Server) Publish(name string, v interface{}) error {
 	for o := range s.Publishers {
 		if o.Name == name {
@@ -93,6 +103,7 @@ func (s *Server) Publish(name string, v interface{}) error {
 	return fmt.Errorf("publisher not found")
 }
 
+//RegisterPublisher will add new publisher to server
 func (s *Server) RegisterPublisher(name string, conn net.Conn) error {
 	for i := range s.Publishers {
 		if i.Name == name {
@@ -109,6 +120,7 @@ func (s *Server) RegisterPublisher(name string, conn net.Conn) error {
 	return nil
 }
 
+//DeRegisterPublisher will remove this publisher from server
 func (s *Server) DeRegisterPublisher(name string, conn net.Conn) error {
 	for i := range s.Publishers {
 		if i.Name == name && i.Conn == conn {
@@ -130,6 +142,7 @@ func (s *Server) DeRegisterPublisher(name string, conn net.Conn) error {
 	return fmt.Errorf("publisher not found")
 }
 
+//RegisterSubscriber will add new Subscriber for a publisher in server
 func (s *Server) RegisterSubscriber(name string, c net.Conn) error {
 	for i := range s.Publishers {
 		if i.Name == name {
@@ -143,6 +156,7 @@ func (s *Server) RegisterSubscriber(name string, c net.Conn) error {
 	return fmt.Errorf("publisher not found")
 }
 
+//DeRegisterSubscriber will remove subscriber from this publisher in server
 func (s *Server) DeRegisterSubscriber(name string, c net.Conn) error {
 	for i := range s.Publishers {
 		if i.Name == name {
@@ -156,6 +170,7 @@ func (s *Server) DeRegisterSubscriber(name string, c net.Conn) error {
 	return fmt.Errorf("publisher not found")
 }
 
+//AcceptConnection will accpet new connections to clients
 func (s *Server) AcceptConnection() (net.Conn, error) {
 	c, err := s.Listener.Accept()
 	if err != nil {
@@ -165,6 +180,7 @@ func (s *Server) AcceptConnection() (net.Conn, error) {
 	return c, nil
 }
 
+//HandleConnection will recive messages from client and procces them this should be routine after accepted new connection
 func (s *Server) HandleConnection(c net.Conn) {
 	for {
 		msg := make([]byte, 256)
@@ -207,7 +223,6 @@ func (s *Server) HandleConnection(c net.Conn) {
 			}
 			if message.Mode == "publish" {
 				Data := message.Data.(map[string]interface{})
-				fmt.Println(Data["name"], Data["value"])
 				err := s.Publish(Data["name"].(string), Data["value"])
 				if err != nil {
 					response.Data = err.Error()
