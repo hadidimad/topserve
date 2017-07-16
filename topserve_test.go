@@ -78,4 +78,28 @@ func TestPublishValues(t *testing.T) {
 		t.Log("subscriber didnt run")
 		t.Fail()
 	}
+	err = client2.DeRegisterSubscriber("test:test")
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+	err = client1.PublishServer("test:test", value)
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+	if num == 2 {
+		t.Log("subscriber runs after delete")
+		t.Fail()
+	}
+	err = client1.DeRegisterPublisher("test:test")
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+	err = client2.RegisterSubscriber("test:test")
+	if err == nil {
+		t.Fail()
+	}
+
 }
