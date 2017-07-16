@@ -116,6 +116,6 @@ the subscriber will automaticly delete
 you can see good example at topserve_test.go
 
 at the end please help me to imporve this library 
-special thanks from @ahmd.rz
+special thanks from @ahmdrz
 
 
