@@ -1,6 +1,6 @@
 # topserve
     golang topic server and client package
-###what is topic?
+### what is topic?
 topic is a something that use to connect some programs together with events
 a topic have this parts:
     *Event:
@@ -18,7 +18,7 @@ first all of the programs need to be client in topic server
 in this case the data fetcher program is a publisher for "fetched data" event
 and other two programs are  subscribers now lets see how to do it with topserve
 
-###Server Code
+### Server Code
 
 ```golang
     var server topserve.Server
@@ -39,7 +39,7 @@ and other two programs are  subscribers now lets see how to do it with topserve
 
 this is server code now lets see client
 
-###Client Code
+### Client Code
 
 first you should make new client for the port that server run on it to recive server messages
 ```golang
