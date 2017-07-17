@@ -36,6 +36,10 @@ and other two programs are  subscribers now lets see how to do it with topserve
 		}
 	}
 ```
+when you want server to stop service just do this
+```golang
+	server.End()
+```
 
 this is server code now lets see client
 
@@ -112,10 +116,13 @@ the subscriber will automaticly delete
 		t.Fail()
 	}
 ```
+when you want to delete your client and all of it publishers and subscribers use this
+```golang
+	client.End()
+```
 
 you can see good example at topserve_test.go
 
 at the end please help me to imporve this library 
 special thanks from [@ahmdrz](https://github.com/ahmdrz)
-
 
