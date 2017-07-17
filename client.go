@@ -175,6 +175,16 @@ func (cl *Client) DeRegisterPublisher(name string) error {
 	return nil
 }
 
+func (cl *Client) End() {
+	for i := range cl.YourPublishers {
+		cl.DeRegisterPublisher(i)
+	}
+	for i := range cl.YourSubscribers {
+		cl.DeRegisterSubscriber(i)
+	}
+	cl.c.Close()
+}
+
 //HandleIncomings will recive and process them this should be routine after making new client
 func (cl *Client) HandleIncomings() {
 	for {
@@ -182,6 +192,7 @@ func (cl *Client) HandleIncomings() {
 		readLen, err := cl.c.Read(msg)
 		if err != nil {
 			fmt.Println(err)
+			cl.c.Close()
 		} else {
 			var message Message
 			err = json.Unmarshal(msg[:readLen], &message)

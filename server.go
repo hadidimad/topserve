@@ -180,6 +180,17 @@ func (s *Server) AcceptConnection() (net.Conn, error) {
 	return c, nil
 }
 
+func (s *Server) End() {
+	for i := range s.Publishers {
+		for j := range i.Subscribers {
+			i.DeRegisterSubscriber(j.Conn)
+		}
+		s.DeRegisterPublisher(i.Name, i.Conn)
+		i.Conn.Close()
+	}
+
+}
+
 //HandleConnection will recive messages from client and procces them this should be routine after accepted new connection
 func (s *Server) HandleConnection(c net.Conn) {
 	for {

@@ -101,5 +101,6 @@ func TestPublishValues(t *testing.T) {
 	if err == nil {
 		t.Fail()
 	}
-
+	client1.End()
+	client2.End()
 }
